@@ -1,4 +1,4 @@
-const CACHE = 'ciclo-v1';
+const CACHE = 'ciclo-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -11,6 +11,7 @@ const ASSETS = [
   './js/store.js',
   './js/seed.js',
   './js/metrics.js',
+  './js/lifts.js',
   './js/utils.js',
   './js/charts.js',
   './js/ui.js',

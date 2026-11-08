@@ -1,7 +1,7 @@
 // Modale di creazione / modifica atleta (usata dalla home e dalla timeline)
 
 import { addAthlete, save } from '../store.js';
-import { LIFTS } from '../metrics.js';
+import { LIFTS, LIFT_GROUPS, liftsOf } from '../lifts.js';
 import { openModal, toast } from '../ui.js';
 import { esc, mondayOf, todayYmd } from '../utils.js';
 
@@ -17,12 +17,14 @@ export function athleteForm(a, onSaved) {
         <label>Obiettivo / gara<input name="compName" value="${esc(v.compName || '')}" placeholder="facoltativo"></label>
         <label>Data<input type="date" name="compDate" value="${esc(v.compDate || '')}"></label>
       </div>
-      <fieldset><legend>Massimali (kg)</legend>
-        <div class="form-row three">
-          ${LIFTS.map(l => `<label>${l.name}<input inputmode="decimal" name="max-${l.id}" value="${esc(v.maxes?.[l.id] || '')}"></label>`).join('')}
+      ${LIFT_GROUPS.map(g => `<fieldset><legend>Massimali · ${g.name} (kg)</legend>
+        <div class="form-row ${g.id === 'fond' ? 'three' : 'four'}">
+          ${liftsOf(g.id).map(l => `<label>${l.name}${l.bw ? ' <small>(zavorra)</small>' : ''}<input inputmode="decimal" name="max-${l.id}" value="${esc(v.maxes?.[l.id] || '')}"></label>`).join('')}
         </div>
-        <small>Servono a convertire le % del massimale in kg e a calcolare l'intensità media.</small>
-      </fieldset>
+        ${g.id === 'fond' ? '<small>Servono a convertire le % del massimale in kg e a calcolare l\'intensità media. Lascia vuoto ciò che non usi.</small>' : ''}
+      </fieldset>`).join('')}
+      <label>Peso corporeo (kg)<input inputmode="decimal" name="bodyweight" value="${esc(v.bodyweight || '')}">
+        <small>Serve per le trazioni zavorrate: il carico sollevato è peso corporeo + zavorra, quindi %1RM, tonnellaggio e 1RM stimato lo includono.</small></label>
       <div class="modal-actions">
         <button type="button" class="btn" data-close>Annulla</button>
         <button class="btn primary">${a ? 'Salva' : 'Crea atleta'}</button>
@@ -37,7 +39,8 @@ export function athleteForm(a, onSaved) {
         planStart: mondayOf(String(fd.get('planStart'))),
         compName: String(fd.get('compName')).trim(),
         compDate: String(fd.get('compDate')),
-        maxes: Object.fromEntries(LIFTS.map(l => [l.id, String(fd.get('max-' + l.id)).trim()]))
+        maxes: Object.fromEntries(LIFTS.map(l => [l.id, String(fd.get('max-' + l.id)).trim()])),
+        bodyweight: String(fd.get('bodyweight')).trim()
       };
       if (!data.name) return;
       let saved = a;

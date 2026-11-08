@@ -1,7 +1,8 @@
 // Libreria esercizi: categoria, alzata collegata, classe pliometrica
 
 import { state, saveExercise, deleteExercise, exerciseUsed } from '../store.js';
-import { KINDS, LIFTS, PLYO } from '../metrics.js';
+import { KINDS, PLYO } from '../metrics.js';
+import { LIFT_GROUPS, liftsOf } from '../lifts.js';
 import { App } from '../app.js';
 import { openModal, confirmDlg, toast, exTag } from '../ui.js';
 import { esc } from '../utils.js';
@@ -13,9 +14,9 @@ function form(ex) {
     <form class="form" id="exf">
       <label>Nome<input name="name" required value="${esc(v.name)}"></label>
       <label>Categoria<select name="kind">${Object.entries(KINDS).map(([k, x]) => `<option value="${k}" ${k === v.kind ? 'selected' : ''}>${x.name}</option>`).join('')}</select></label>
-      <label data-for="forza">Conta come alzata di gara
+      <label data-for="forza">Collegato all'alzata
         <select name="lift"><option value="">No, esercizio di forza generico</option>
-          ${LIFTS.map(l => `<option value="${l.id}" ${l.id === v.lift ? 'selected' : ''}>${l.name}</option>`).join('')}</select>
+          ${LIFT_GROUPS.map(g => `<optgroup label="${g.name}">${liftsOf(g.id).map(l => `<option value="${l.id}" ${l.id === v.lift ? 'selected' : ''}>${l.name}</option>`).join('')}</optgroup>`).join('')}</select>
         <small>Se collegato, entra nei totali di quell'alzata e si può programmare in %1RM del suo massimale.</small></label>
       <label data-for="plio">Classe di intensità
         <select name="plyo">${PLYO.map(p => `<option value="${p.id}" ${p.id === v.plyo ? 'selected' : ''}>${p.name}</option>`).join('')}</select>

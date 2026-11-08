@@ -4,6 +4,7 @@ import {
   sessionById, athleteById, exById, newItem, deleteSession, duplicateSession, save
 } from '../store.js';
 import { KINDS, plannedKg, totals } from '../metrics.js';
+import { liftById } from '../lifts.js';
 import { App } from '../app.js';
 import { openModal, confirmDlg, toast, pickExercise, exTag } from '../ui.js';
 import { esc, fmtNum, fmtDay, mondayOf, addDays } from '../utils.js';
@@ -11,7 +12,7 @@ import { esc, fmtNum, fmtDay, mondayOf, addDays } from '../utils.js';
 // Campi per tipo di esercizio: [campo, etichetta]
 function fieldsFor(ex) {
   if (ex.kind === 'plio') return [['sets', 'Serie'], ['reps', 'Contatti/serie']];
-  if (ex.kind === 'forza' && ex.lift) return [['sets', 'Serie'], ['reps', 'Rip'], ['pct', '%1RM'], ['kg', 'kg'], ['rpe', 'RPE']];
+  if (ex.kind === 'forza' && ex.lift) return [['sets', 'Serie'], ['reps', 'Rip'], ['pct', '%1RM'], ['kg', liftById(ex.lift)?.bw ? 'Zavorra kg' : 'kg'], ['rpe', 'RPE']];
   return [['sets', 'Serie'], ['reps', 'Rip'], ['kg', 'kg'], ['rpe', 'RPE']];
 }
 
@@ -53,6 +54,8 @@ function totalsLine(a, s) {
   };
   both('Sollevamenti fondamentali', p.fond.nbl, d.fond.nbl);
   both('Tonnellaggio fondamentali', p.fond.ton, d.fond.ton, ' kg');
+  both('Sollevamenti complementari', p.compl.nbl, d.compl.nbl);
+  both('Tonnellaggio complementari', p.compl.ton, d.compl.ton, ' kg');
   both('Contatti', p.plioTot, d.plioTot);
   both('Rip. potenza', p.potenza.reps, d.potenza.reps);
   both('Serie accessori', p.acc.sets, d.acc.sets);

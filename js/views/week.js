@@ -17,10 +17,10 @@ function rowDefs() {
     R.push(
       [l.name, 'Sollevamenti (NBL)', m => L(m).nbl],
       [l.name, 'Serie', m => L(m).sets],
-      [l.name, 'Tonnellaggio (kg)', m => L(m).ton],
+      [l.name, l.bw ? 'Tonnellaggio (kg, con peso corporeo)' : 'Tonnellaggio (kg)', m => L(m).ton],
       [l.name, 'Intensità media (%1RM)', m => L(m).pct, 1, true],
       [l.name, 'Frequenza (sedute)', m => L(m).freq],
-      [l.name, '1RM stimato (kg)', m => L(m).e1rm, 1, false, true]
+      [l.name, l.bw ? '1RM stimato (zavorra kg)' : '1RM stimato (kg)', m => L(m).e1rm, 1, false, true]
     );
   }
   R.push(
@@ -66,6 +66,7 @@ function sessionCard(a, s) {
   const d = s.items.filter(i => i.done).length;
   const bits = [];
   if (t.fond.nbl) bits.push(`${fmtNum(t.fond.nbl)} soll.`);
+  if (t.compl.nbl) bits.push(`${fmtNum(t.compl.nbl)} soll. compl.`);
   if (t.plioTot) bits.push(`${fmtNum(t.plioTot)} contatti`);
   if (t.potenza.reps) bits.push(`${fmtNum(t.potenza.reps)} rip pot.`);
   return `<a class="sess" href="#/s/${s.id}">

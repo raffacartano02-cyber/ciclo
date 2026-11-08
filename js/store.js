@@ -18,8 +18,30 @@ export const BLOCK_TYPES = [
 ];
 export const blockType = id => BLOCK_TYPES.find(t => t.id === id) || BLOCK_TYPES[BLOCK_TYPES.length - 1];
 
+const VERSION = 2;
+
+// v2: hip thrust, RDL, military press e trazioni zavorrate diventano alzate monitorate.
+// Collega gli esercizi della libreria già salvata (se il coach non li ha già collegati)
+// e aggiunge le nuove varianti predefinite.
+const V2_LINKS = { 'cx-hip-thrust': 'hipthrust', 'cx-stacco-rumeno': 'rdl', 'cx-military': 'military', 'cx-trazioni': 'trazioni' };
+const V2_NEW = ['cx-hip-thrust-pausa', 'cx-military-seduto', 'cx-chin-up'];
+
+function migrate(d) {
+  if ((d.version || 1) < VERSION) migrated = true;
+  if ((d.version || 1) < 2 && Array.isArray(d.exercises)) {
+    for (const e of d.exercises) {
+      if (V2_LINKS[e.id] && e.kind === 'forza' && !e.lift) e.lift = V2_LINKS[e.id];
+    }
+    for (const id of V2_NEW) {
+      if (!d.exercises.some(e => e.id === id)) d.exercises.push({ ...SEED_EXERCISES.find(e => e.id === id) });
+    }
+  }
+  d.version = VERSION;
+  return d;
+}
+
 function fresh() {
-  return { version: 1, exercises: SEED_EXERCISES.map(e => ({ ...e })), athletes: [], sessions: [], settings: {} };
+  return { version: VERSION, exercises: SEED_EXERCISES.map(e => ({ ...e })), athletes: [], sessions: [], settings: {} };
 }
 
 function load() {
@@ -27,7 +49,7 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const d = JSON.parse(raw);
-      if (d && Array.isArray(d.athletes) && Array.isArray(d.sessions)) return { ...fresh(), ...d };
+      if (d && Array.isArray(d.athletes) && Array.isArray(d.sessions)) return { ...fresh(), ...migrate(d) };
     }
   } catch (err) {
     console.error('Errore caricamento dati', err);
@@ -36,7 +58,9 @@ function load() {
   return { ...fresh(), ...demoState(), settings: { demo: true } };
 }
 
+let migrated = false;
 export const state = load();
+if (migrated) save();
 
 export function save() {
   try {
@@ -47,7 +71,8 @@ export function save() {
 }
 
 export function replaceData(d) {
-  state.version = 1;
+  migrate(d);
+  state.version = VERSION;
   state.exercises = Array.isArray(d.exercises) ? d.exercises : fresh().exercises;
   state.athletes = d.athletes;
   state.sessions = d.sessions;
