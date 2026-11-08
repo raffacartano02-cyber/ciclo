@@ -1,6 +1,7 @@
 // Libreria esercizi predefinita + dati di esempio per il primo avvio
 
-import { uid, addDays, mondayOf, todayYmd, round25 } from './utils.js';
+import { uid, addDays, mondayOf, todayYmd } from './utils.js';
+import { plannedKg } from './lifts.js';
 
 // kind: forza | plio | potenza | acc
 // lift: alzata di gara a cui l'esercizio è riferito (per %1RM e per i totali dei fondamentali)
@@ -23,13 +24,17 @@ export const SEED_EXERCISES = [
   f('cx-stacco-sumo', 'Stacco sumo', 'stacco'),
   f('cx-stacco-pausa', 'Stacco con pausa', 'stacco'),
   f('cx-stacco-deficit', 'Stacco in deficit', 'stacco'),
+  // Complementari principali e varianti collegate
+  f('cx-hip-thrust', 'Hip thrust', 'hipthrust'),
+  f('cx-hip-thrust-pausa', 'Hip thrust con pausa', 'hipthrust'),
+  f('cx-stacco-rumeno', 'Stacco rumeno', 'rdl'),
+  f('cx-military', 'Military press', 'military'),
+  f('cx-military-seduto', 'Military press seduto', 'military'),
+  f('cx-trazioni', 'Trazioni zavorrate', 'trazioni'),
+  f('cx-chin-up', 'Chin-up zavorrati (presa supina)', 'trazioni'),
   // Altri esercizi di forza
   f('cx-front-squat', 'Front squat'),
-  f('cx-stacco-rumeno', 'Stacco rumeno'),
-  f('cx-military', 'Military press'),
   f('cx-rematore', 'Rematore bilanciere'),
-  f('cx-trazioni', 'Trazioni zavorrate'),
-  f('cx-hip-thrust', 'Hip thrust'),
   f('cx-bulgarian', 'Bulgarian split squat'),
   // Pliometria
   p('cx-pogo', 'Pogo jump', 'bassa'),
@@ -86,8 +91,7 @@ function fillDone(sessions, athlete, today, rand) {
     if (rand() < 0.08) continue; // qualche seduta saltata, per vedere lo scarto
     for (const it of s.items) {
       const ex = SEED_EXERCISES.find(e => e.id === it.exerciseId);
-      const max = ex.lift ? Number(athlete.maxes[ex.lift]) : 0;
-      const kg = it.kg ? Number(it.kg) : (it.pct && max ? round25(Number(it.pct) / 100 * max) : 0);
+      const kg = plannedKg(it, ex, athlete);
       const r = rand();
       const rpe = it.rpe ? Math.min(10, Math.max(6, Number(it.rpe) + (r < 0.25 ? -0.5 : r > 0.8 ? 0.5 : 0))) : '';
       const sets = Number(it.sets) - (rand() < 0.07 ? 1 : 0);
@@ -99,7 +103,8 @@ function fillDone(sessions, athlete, today, rand) {
 function powerlifter(mon, today) {
   const ath = {
     id: uid(), demo: true, name: 'Marco R. (esempio)', sport: 'Powerlifting · -83 kg',
-    maxes: { squat: '200', panca: '130', stacco: '230' },
+    maxes: { squat: '200', panca: '130', stacco: '230', hipthrust: '220', rdl: '180', military: '75', trazioni: '45' },
+    bodyweight: '83',
     planStart: addDays(mon, -28), compName: 'Campionato regionale', compDate: addDays(mon, 47),
     metric: 'fond-nbl',
     blocks: [
@@ -133,7 +138,7 @@ function powerlifter(mon, today) {
       sessions.push({ id: uid(), athleteId: ath.id, date: week, name: 'Squat + Panca', items: [
         item('cx-squat', m.sets, m.reps, m),
         item('cx-panca', m.sets, m.reps, m),
-        item('cx-rematore-man', 4, 10, { rpe: 8 })] });
+        item('cx-trazioni', 4, 5, { pct: Math.min(85, m.pct + 2.5), rpe: 8 })] });
       sessions.push({ id: uid(), athleteId: ath.id, date: addDays(week, 2), name: 'Stacco + varianti', items: [
         item('cx-stacco', m.sets - 1, m.reps, m),
         item('cx-panca-stretta', m.sets - 1, m.reps + 2, v(12.5)),
@@ -142,6 +147,7 @@ function powerlifter(mon, today) {
       sessions.push({ id: uid(), athleteId: ath.id, date: addDays(week, 4), name: 'Panca + Stacco', items: [
         item('cx-panca', m.sets, m.reps, { pct: m.pct - 5, rpe: m.rpe - 0.5 }),
         item('cx-stacco-pausa', 3, m.reps, v(15)),
+        item('cx-military', 4, 6, { pct: 72.5, rpe: 7.5 }),
         item('cx-face-pull', 3, 15, { rpe: 8 })] });
     }
   }
@@ -151,7 +157,8 @@ function powerlifter(mon, today) {
 function footballer(mon, today) {
   const ath = {
     id: uid(), demo: true, name: 'Luca B. (esempio)', sport: 'Calcio · difensore centrale',
-    maxes: { squat: '140', panca: '90', stacco: '160' },
+    maxes: { squat: '140', panca: '90', stacco: '160', hipthrust: '180', rdl: '130', military: '60', trazioni: '25' },
+    bodyweight: '82',
     planStart: addDays(mon, -21), compName: '', compDate: '',
     metric: 'plio',
     blocks: [
@@ -179,7 +186,8 @@ function footballer(mon, today) {
         item('cx-skip', s(3), 20),
         item('cx-bounding', s(4), Math.min(5 + g, 10)),
         item('cx-jump-squat', s(4), 5, { kg: 20, rpe: 7 }),
-        item('cx-stacco-rumeno', s(3), 8, { kg: 80 + 5 * Math.min(g, 4), rpe: 7.5 }),
+        item('cx-stacco-rumeno', s(3), 8, { pct: 60 + 2.5 * Math.min(g, 4), rpe: 7.5 }),
+        item('cx-hip-thrust', s(3), 8, { pct: 70 + 2.5 * (g % 3), rpe: 7.5 }),
         item('cx-nordic', s(3), 4 + Math.floor(g / 2))] });
     }
   }

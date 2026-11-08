@@ -39,6 +39,25 @@ col revisore prima di mostrarlo come fonte nell'app.
     rating of perceived exertion scale for resistance training.* Strength Cond J.
     2016;38(4):42-49. **[PR]**
 
+## 2-bis. Alzate complementari e trazioni zavorrate
+
+- **Alzate monitorate**: oltre ai fondamentali (squat, panca, stacco) l'app traccia hip thrust,
+  stacco rumeno (RDL), military press e trazioni zavorrate con le stesse metriche (NBL, serie,
+  tonnellaggio, intensità media, frequenza, 1RM stimato). Formule identiche ai §1-3. **[DEF]**
+  La divisione in "fondamentali" e "complementari" e i relativi totali separati sono **[CONV]**.
+- **Carico sollevato nelle trazioni** = peso corporeo + zavorra. **[DEF]** Nella trazione si
+  solleva l'intero corpo: la massa spostata comprende il peso corporeo, non solo la zavorra.
+  - **[CONV]** Il massimale delle trazioni si inserisce come **zavorra** al massimale (come si
+    usa dire "trazione +40"); l'app lo converte in carico sollevato sommando il peso corporeo
+    dell'atleta. %1RM, tonnellaggio e 1RM stimato usano il carico sollevato; in seduta i kg
+    restano la zavorra, e il 1RM stimato viene mostrato come zavorra (carico stimato − peso
+    corporeo) per confrontarlo col massimale inserito.
+  - Se il peso corporeo non è inserito, %1RM e 1RM stimato delle trazioni non vengono calcolati
+    (nessun numero finto). Una % che darebbe zavorra negativa viene portata a 0 kg (corpo libero).
+  - Limite: approssimazione, il peso corporeo inserito è quello del profilo, non del giorno.
+- L'applicazione dell'Epley (§3) a esercizi diversi da squat/panca/stacco non è stata validata
+  negli studi citati: per hip thrust, RDL, military e trazioni il 1RM stimato è **[CONV]**.
+
 ## 3. 1RM stimato (solo dati eseguiti)
 
 - Formula: kg × (1 + (rip + RIR) / 30), con RIR = 10 − RPE. Epley sulle ripetizioni "a cedimento"

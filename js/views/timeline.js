@@ -9,6 +9,7 @@ import { seasonChart } from '../charts.js';
 import { App } from '../app.js';
 import { athleteForm } from './forms.js';
 import { confirmDlg, toast } from '../ui.js';
+import { fmtMax } from '../lifts.js';
 import { esc, fmtNum, fmtDM, fmtRange, todayYmd, mondayOf, diffDays } from '../utils.js';
 
 function metricSelect(current) {
@@ -44,12 +45,12 @@ export function render(el, id) {
 
   const b = blockAt(a, today);
   const days = a.compDate ? diffDays(today, a.compDate) : null;
-  const maxes = LIFTS.filter(l => a.maxes?.[l.id]).map(l => `${l.name} ${esc(a.maxes[l.id])}`).join(' · ');
+  const maxes = LIFTS.filter(l => a.maxes?.[l.id]).map(l => `${l.name} ${esc(fmtMax(l, a.maxes[l.id]))}`).join(' · ');
 
   el.innerHTML = `
     <nav class="crumbs"><a href="#/">Atleti</a> <span>/</span> ${esc(a.name)}</nav>
     <div class="page-head">
-      <div><h1>${esc(a.name)}</h1><p class="sub">${esc(a.sport || '')}${maxes ? ' · Massimali: ' + maxes + ' kg' : ''}</p></div>
+      <div><h1>${esc(a.name)}</h1><p class="sub">${esc(a.sport || '')}${a.bodyweight ? ` · peso ${esc(a.bodyweight)} kg` : ''}${maxes ? ' · Massimali (kg): ' + maxes : ''}</p></div>
       <div class="row">
         <button class="btn" id="edit">Modifica</button>
         <a class="btn primary" href="#/a/${a.id}/w/${mon}">Settimana corrente →</a>

@@ -278,6 +278,8 @@ label.inline { display: flex; align-items: center; gap: 8px; font-size: 0.85rem;
 .form p { margin: 0; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .form-row.three { grid-template-columns: repeat(3, 1fr); }
+.form-row.four { grid-template-columns: repeat(4, 1fr); align-items: end; }
+@media (max-width: 720px) { .form-row.four { grid-template-columns: 1fr 1fr; } }
 fieldset { border: 1px solid var(--line); border-radius: 11px; padding: 10px 12px 12px; margin: 0; }
 legend { color: var(--muted); font-size: 0.85rem; padding: 0 6px; }
 [hidden] { display: none !important; }

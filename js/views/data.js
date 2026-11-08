@@ -8,9 +8,11 @@ import { todayYmd, fmtDM, diffDays } from '../utils.js';
 const SOURCES = [
   ['Sollevamenti (NBL)', 'Serie × ripetizioni per alzata. Conteggio.', 'Definizione'],
   ['Tonnellaggio', 'Serie × ripetizioni × kg. Mostrato sempre insieme a NBL e intensità perché da solo non distingue carichi alti da molte ripetizioni.', 'McBride et al., J Strength Cond Res 2009 · Scott et al., Sports Med 2016'],
+  ['Alzate monitorate', 'Fondamentali (squat, panca, stacco) e complementari (hip thrust, RDL, military press, trazioni zavorrate): stesse formule, totali separati per gruppo.', 'Definizione · gruppi: convenzione'],
+  ['Trazioni zavorrate', 'Carico sollevato = peso corporeo + zavorra. Il massimale si inserisce come zavorra; %1RM, tonnellaggio e 1RM stimato usano il carico sollevato, i kg in seduta restano la zavorra. Senza peso corporeo %1RM e 1RM stimato non si calcolano.', 'Definizione (massa spostata) · scelta del massimale come zavorra: convenzione'],
   ['Intensità media (%1RM)', '(Tonnellaggio ÷ NBL) ÷ massimale. Le varianti usano il massimale dell\'alzata a cui le colleghi (tua scelta).', 'Definizione · Scott et al., Sports Med 2016'],
   ['RPE', 'Scala basata sulle ripetizioni in riserva (RIR).', 'Zourdos et al., J Strength Cond Res 2016 · Helms et al., Strength Cond J 2016'],
-  ['1RM stimato', 'Epley sulle ripetizioni a cedimento ricostruite come rip + RIR; solo se ≤ 10, arrotondato a 2,5 kg. Epley nasce da un manuale (non peer-reviewed) ed è validata a posteriori.', 'LeSuer et al., J Strength Cond Res 1997 · combinazione con RIR: convenzione'],
+  ['1RM stimato', 'Epley sulle ripetizioni a cedimento ricostruite come rip + RIR; solo se ≤ 10, arrotondato a 2,5 kg. Epley nasce da un manuale (non peer-reviewed) ed è validata a posteriori su squat, panca e stacco.', 'LeSuer et al., J Strength Cond Res 1997 · combinazione con RIR e uso sulle complementari: convenzione'],
   ['Contatti pliometrici', 'Serie × contatti. Le classi bassa/media/alta/shock sono la tua classificazione degli esercizi.', 'Convenzione · graduatoria di intensità: Jensen & Ebben 2007, Ebben et al. 2008 (da verificare)'],
   ['Blocchi', 'Etichette del coach, nessun calcolo derivato.', 'Issurin, Sports Med 2010 · tapering: Bosquet et al., Med Sci Sports Exerc 2007']
 ];
