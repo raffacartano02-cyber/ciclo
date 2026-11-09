@@ -16,6 +16,30 @@ const $ = (sel, root = view) => root.querySelector(sel);
 const $$ = (sel, root = view) => [...root.querySelectorAll(sel)];
 const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
 
+// Avvisi e conferme dentro la pagina (i popup del browser possono essere bloccati)
+function notify(msg) {
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(notify._t);
+  notify._t = setTimeout(() => t.classList.remove('show'), 3500);
+}
+function ask(msg, okLabel = 'Conferma') {
+  return new Promise(resolve => {
+    const m = document.createElement('div');
+    m.className = 'modal';
+    m.innerHTML = `<div class="modal-box" role="dialog" aria-modal="true"><p>${esc(msg)}</p>
+      <div class="row gap end"><button class="btn" data-r="0">Annulla</button><button class="btn primary" data-r="1">${esc(okLabel)}</button></div></div>`;
+    const close = v => { m.remove(); document.removeEventListener('keydown', key, true); resolve(v); };
+    const key = e => { if (e.key === 'Escape') { e.stopPropagation(); close(false); } };
+    m.addEventListener('click', e => { if (e.target === m) return close(false); const r = e.target.closest('[data-r]'); if (r) close(r.dataset.r === '1'); });
+    document.addEventListener('keydown', key, true);
+    document.body.appendChild(m);
+    m.querySelector('[data-r="1"]').focus();
+  });
+}
+
 function onKeys(map) {
   const fn = e => {
     if (e.target.matches('input, textarea, select')) return;
@@ -87,19 +111,19 @@ function renderHome() {
     </section>
 
     <section class="actions">
-      <a class="action primary" href="#/flashcard"><span>🃏</span><div><b>Ripasso flashcard</b><small>${due ? due + ' da ripassare' : 'Nessun ripasso in scadenza'} · ${fresh} nuove</small></div></a>
-      <a class="action" href="#/quiz/rapido"><span>⚡</span><div><b>Quiz rapido</b><small>10 domande su tutto il programma</small></div></a>
-      <a class="action" href="#/esame"><span>🎓</span><div><b>Simulazione d'esame</b><small>30 domande a tempo, voto in trentesimi</small></div></a>
-      <a class="action ${g.wrong ? 'warn' : ''}" href="#/quiz/errori"><span>🔁</span><div><b>Ripeti gli errori</b><small>${g.wrong ? g.wrong + ' domande sbagliate da ripassare' : 'Nessun errore da ripassare'}</small></div></a>
+      <a class="action primary" href="#flashcard"><span>🃏</span><div><b>Ripasso flashcard</b><small>${due ? due + ' da ripassare' : 'Nessun ripasso in scadenza'} · ${fresh} nuove</small></div></a>
+      <a class="action" href="#quiz-rapido"><span>⚡</span><div><b>Quiz rapido</b><small>10 domande su tutto il programma</small></div></a>
+      <a class="action" href="#esame"><span>🎓</span><div><b>Simulazione d'esame</b><small>30 domande a tempo, voto in trentesimi</small></div></a>
+      <a class="action ${g.wrong ? 'warn' : ''}" href="#quiz-errori"><span>🔁</span><div><b>Ripeti gli errori</b><small>${g.wrong ? g.wrong + ' domande sbagliate da ripassare' : 'Nessun errore da ripassare'}</small></div></a>
     </section>
 
     <section>
-      <div class="sec-head"><h2>Il tuo programma</h2><a href="#/progressi">Dettagli</a></div>
+      <div class="sec-head"><h2>Il tuo programma</h2><a href="#progressi">Dettagli</a></div>
       <div class="topics">
         ${TOPICS.map(t => {
           const s = topicStats(t.id);
           const cov = pct(s.seen, counts[t.id] || 0);
-          return `<a class="topic" href="#/quiz/t/${t.id}">
+          return `<a class="topic" href="#quiz-t-${t.id}">
             <span class="ti">${t.icon}</span>
             <div class="tb"><b>${t.nome}</b>
               ${bar(cov)}
@@ -125,7 +149,7 @@ function renderStudy(tab = 'muscoli') {
   if (!STUDY_TABS.some(t => t.id === tab)) tab = 'muscoli';
   h(`
     <div class="page-head"><h1>Studia</h1><p class="muted">Schede di consultazione. Tocca una voce per aprirla.</p></div>
-    <nav class="tabs">${STUDY_TABS.map(t => `<a href="#/studia/${t.id}" class="${t.id === tab ? 'on' : ''}">${t.nome}</a>`).join('')}</nav>
+    <nav class="tabs">${STUDY_TABS.map(t => `<a href="#studia-${t.id}" class="${t.id === tab ? 'on' : ''}">${t.nome}</a>`).join('')}</nav>
     <input type="search" id="q" class="search" placeholder="Cerca (es. sciatico, rotula, C5…)" autocomplete="off">
     <div id="list"></div>`);
 
@@ -208,14 +232,14 @@ function renderFlashSetup() {
   $$('.picker button').forEach(b => b.addEventListener('click', upd));
   $('#go').onclick = () => {
     const s = new Set(read());
-    if (!s.size) return alert('Scegli almeno un argomento.');
+    if (!s.size) return notify('Scegli almeno un argomento.');
     const pool = cards.filter(c => s.has(c.t));
     const dueCards = shuffle(pool.filter(c => cardState(c.id) && isDue(c.id)));
     const newCards = shuffle(pool.filter(c => !cardState(c.id))).slice(0, +$('#newN').value);
     const deck = [...dueCards, ...newCards];
     if (!deck.length) {
       const next = pool.map(c => cardState(c.id)?.d).filter(Boolean).sort((a, b) => a - b)[0];
-      return alert('Niente da ripassare ora in questi argomenti.' + (next ? ` Prossimo ripasso: ${new Date(next).toLocaleDateString('it-IT')}.` : ''));
+      return notify('Niente da ripassare ora in questi argomenti.' + (next ? ` Prossimo ripasso: ${new Date(next).toLocaleDateString('it-IT')}.` : ''));
     }
     playFlash(deck);
   };
@@ -231,7 +255,7 @@ function playFlash(deck) {
     const c = deck[i];
     const t = topicById(c.t);
     h(`
-      <div class="play-head"><a href="#/flashcard" class="link">✕ Esci</a><span class="muted">${Math.min(i + 1, deck.length)} / ${deck.length}</span></div>
+      <div class="play-head"><a href="#flashcard" class="link">✕ Esci</a><span class="muted">${Math.min(i + 1, deck.length)} / ${deck.length}</span></div>
       ${bar(pct(i, deck.length))}
       <div class="flash ${flipped ? 'flipped' : ''}" id="card" tabindex="0">
         <div class="fc-meta">${t.icon} ${t.nome} · ${esc(c.sub)}</div>
@@ -259,7 +283,7 @@ function playFlash(deck) {
     h(`<div class="card center">
       <div class="big-emoji">✅</div><h1>Sessione completata</h1>
       <p class="muted">${total} carte · ${tally.good} sapute · ${tally.hard} incerte · ${tally.again} da rivedere</p>
-      <div class="row gap center"><a class="btn primary" href="#/flashcard">Nuova sessione</a><a class="btn" href="#/">Home</a></div></div>`);
+      <div class="row gap center"><a class="btn primary" href="#flashcard">Nuova sessione</a><a class="btn" href="#home">Home</a></div></div>`);
   };
   cleanup = onKeys({
     ' ': () => { if (!flipped) { flipped = true; draw(); } },
@@ -282,14 +306,14 @@ function renderQuizSetup() {
   const read = bindPicker('quiz');
   $('#go').onclick = () => {
     const t = read();
-    if (!t.length) return alert('Scegli almeno un argomento.');
+    if (!t.length) return notify('Scegli almeno un argomento.');
     playQuiz(buildQuiz(t, +$('#n').value), 'Quiz');
   };
 }
 
-function playQuiz(qs, title, backHref = '#/quiz') {
+function playQuiz(qs, title, backHref = '#quiz') {
   if (!qs.length) {
-    h(`<div class="card center"><div class="big-emoji">🎉</div><h1>Niente da ripassare</h1><p class="muted">Non ci sono domande in questa selezione.</p><a class="btn primary" href="#/">Home</a></div>`);
+    h(`<div class="card center"><div class="big-emoji">🎉</div><h1>Niente da ripassare</h1><p class="muted">Non ci sono domande in questa selezione.</p><a class="btn primary" href="#home">Home</a></div>`);
     return;
   }
   let i = 0, answered = null, ok = 0;
@@ -341,7 +365,7 @@ function playQuiz(qs, title, backHref = '#/quiz') {
         <div class="big-emoji">${pct(ok, qs.length) >= 80 ? '🏆' : pct(ok, qs.length) >= 60 ? '👍' : '📚'}</div>
         <h1>${ok} / ${qs.length} corrette</h1>
         <p class="muted">${pct(ok, qs.length)}% di risposte esatte</p>
-        <div class="row gap center"><a class="btn primary" href="${backHref}">Nuovo quiz</a>${wrong.length ? '<a class="btn" href="#/quiz/errori">Ripeti errori</a>' : ''}<a class="btn" href="#/">Home</a></div>
+        <div class="row gap center"><a class="btn primary" href="${backHref}">Nuovo quiz</a>${wrong.length ? '<a class="btn" href="#quiz-errori">Ripeti errori</a>' : ''}<a class="btn" href="#home">Home</a></div>
       </div>
       ${wrong.length ? `<h2 class="group">Da ripassare</h2>${wrong.map(l => `
         <div class="review ko"><b>${esc(l.q.q)}</b><p>✓ ${esc(l.q.a)}</p>${l.q.x ? `<p class="muted">${esc(l.q.x)}</p>` : ''}</div>`).join('')}` : ''}`);
@@ -372,7 +396,7 @@ function renderExamSetup() {
   const read = bindPicker('exam');
   $('#go').onclick = () => {
     const t = read();
-    if (!t.length) return alert('Scegli almeno un argomento.');
+    if (!t.length) return notify('Scegli almeno un argomento.');
     playExam(buildExam(t, +$('#n').value), +$('#min').value, t);
   };
 }
@@ -412,12 +436,12 @@ function playExam(qs, minutes, topics) {
     $('#prev').onclick = () => { if (i > 0) { i--; draw(); } };
     $('#nx').onclick = () => { if (i + 1 < qs.length) { i++; draw(); } else confirmEnd(); };
     $('#end').onclick = confirmEnd;
-    $('#quit').onclick = () => { if (confirm('Abbandonare la simulazione? Le risposte non verranno salvate.')) { stop(); location.hash = '#/esame'; } };
+    $('#quit').onclick = async () => { if (await ask('Abbandonare la simulazione? Le risposte non verranno salvate.', 'Abbandona')) { stop(); location.hash = '#esame'; } };
   };
   const choose = k => { if (k >= qs[i].options.length) return; answers[i] = k; draw(); };
-  const confirmEnd = () => {
+  const confirmEnd = async () => {
     const miss = answers.filter(a => a === null).length;
-    if (confirm(miss ? `Hai ancora ${miss} domande senza risposta. Consegnare comunque?` : 'Consegnare la prova?')) finish(false);
+    if (await ask(miss ? `Hai ancora ${miss} domande senza risposta. Consegnare comunque?` : 'Consegnare la prova?', 'Consegna')) finish(false);
   };
   const stop = () => { clearInterval(timer); cleanup?.(); cleanup = null; };
   const finish = (timeout) => {
@@ -442,7 +466,7 @@ function playExam(qs, minutes, topics) {
         <div class="voto ${passed ? 'pos' : 'neg'}">${voto === '30L' ? '30 e lode' : voto}<small>/30</small></div>
         <h1>${passed ? 'Esame superato' : 'Non ancora sufficiente'}</h1>
         <p class="muted">${ok} risposte corrette su ${qs.length}</p>
-        <div class="row gap center"><a class="btn primary" href="#/esame">Nuova simulazione</a><a class="btn" href="#/quiz/errori">Ripeti errori</a></div>
+        <div class="row gap center"><a class="btn primary" href="#esame">Nuova simulazione</a><a class="btn" href="#quiz-errori">Ripeti errori</a></div>
       </div>
       <h2 class="group">Per argomento</h2>
       <div class="card">${Object.entries(byT).sort((a, b) => a[1].ok / a[1].n - b[1].ok / b[1].n).map(([t, b]) => `
@@ -484,10 +508,10 @@ function renderProgress() {
       <div class="stat"><b>${boxes.slice(4).reduce((a, b) => a + b, 0)}</b><span>flashcard consolidate</span></div>
       <div class="stat"><b>${state.exams.length}</b><span>simulazioni svolte</span></div>
     </section>
-    ${weak.length ? `<div class="card tip"><b>Su cosa concentrarti:</b> ${weak.map(r => `<a href="#/quiz/t/${r.t.id}">${r.t.nome} (${r.s.pct}%)</a>`).join(', ')}</div>` : ''}
+    ${weak.length ? `<div class="card tip"><b>Su cosa concentrarti:</b> ${weak.map(r => `<a href="#quiz-t-${r.t.id}">${r.t.nome} (${r.s.pct}%)</a>`).join(', ')}</div>` : ''}
     <h2 class="group">Argomenti</h2>
     <div class="card">${rows.map(r => `
-      <a class="tstat" href="#/quiz/t/${r.t.id}"><span>${r.t.icon} ${r.t.nome}</span>
+      <a class="tstat" href="#quiz-t-${r.t.id}"><span>${r.t.icon} ${r.t.nome}</span>
       <span class="muted">${r.s.seen}/${r.n} viste · ${r.s.pct === null ? '—' : r.s.pct + '%'}</span>
       ${bar(r.s.pct ?? 0, r.s.pct !== null && r.s.pct < 60 ? 'low' : '')}</a>`).join('')}</div>
     <h2 class="group">Flashcard per livello</h2>
@@ -499,48 +523,63 @@ function renderProgress() {
       <div class="hist"><span>${new Date(e.at).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}</span><span>${e.ok}/${e.n}</span><b class="${e.passed ? 'pos' : 'neg'}">${e.voto}</b></div>`).join('')}</div>` : ''}
     <div class="row gap danger-zone">
       <button class="btn" id="export">Esporta progressi</button>
-      <label class="btn">Importa<input type="file" id="import" accept="application/json" hidden></label>
+      <button class="btn" id="paste">Incolla backup</button>
+      <label class="btn">Importa file<input type="file" id="import" accept="application/json,.json" hidden></label>
       <button class="btn bad" id="reset">Azzera tutto</button>
-    </div>`);
-  $('#reset').onclick = () => { if (confirm('Cancellare tutti i progressi (statistiche, flashcard, simulazioni)?')) { resetAll(); renderProgress(); } };
-  $('#export').onclick = () => {
-    const blob = new Blob([JSON.stringify(state)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `anatomia-progressi-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  };
-  $('#import').onchange = async e => {
-    const f = e.target.files[0]; if (!f) return;
+    </div>
+    <textarea id="backup" class="backup" hidden aria-label="Backup dei progressi"></textarea>
+    <button class="btn primary" id="restore" hidden>Ripristina da testo</button>`);
+  $('#reset').onclick = async () => { if (await ask('Cancellare tutti i progressi (statistiche, flashcard, simulazioni)?', 'Cancella tutto')) { resetAll(); renderProgress(); notify('Progressi azzerati.'); } };
+  $('#export').onclick = async () => {
+    const json = JSON.stringify(state);
     try {
-      const d = JSON.parse(await f.text());
+      await navigator.clipboard.writeText(json);
+      notify('Progressi copiati negli appunti: incollali in una nota per conservarli.');
+    } catch (e) {
+      $('#backup').hidden = false; $('#backup').value = json; $('#backup').select();
+      notify('Copia il testo selezionato e conservalo in una nota.');
+    }
+    try {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+      a.download = `anatomia-progressi-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    } catch (e) { /* download non disponibile */ }
+  };
+  const applyBackup = text => {
+    try {
+      const d = JSON.parse(text);
       if (!d || typeof d !== 'object' || !d.stats) throw new Error();
       state.srs = d.srs || {}; state.stats = d.stats || {}; state.exams = d.exams || [];
-      save(); renderProgress();
-    } catch (err) { alert('File non valido.'); }
+      save(); renderProgress(); notify('Progressi ripristinati.');
+    } catch (err) { notify('Testo o file non valido: usa un backup esportato da questa app.'); }
+  };
+  $('#paste').onclick = () => { $('#backup').hidden = false; $('#backup').value = ''; $('#backup').focus(); $('#restore').hidden = false; };
+  $('#restore').onclick = () => applyBackup($('#backup').value);
+  $('#import').onchange = async e => {
+    const f = e.target.files[0]; if (f) applyBackup(await f.text());
   };
 }
 
 // ======================= ROUTER =======================
 function route() {
   cleanup?.(); cleanup = null;
-  const hash = location.hash || '#/';
+  const hash = location.hash.slice(1) || 'home';
   let m;
-  if ((m = hash.match(/^#\/studia(?:\/(\w+))?$/))) return renderStudy(m[1]);
-  if (hash === '#/flashcard') return renderFlashSetup();
-  if (hash === '#/quiz') return renderQuizSetup();
-  if (hash === '#/quiz/rapido') return playQuiz(buildQuiz(TOPICS.map(t => t.id), 10), 'Quiz rapido', '#/');
-  if (hash === '#/quiz/errori') return playQuiz(buildQuiz(TOPICS.map(t => t.id), 20, { onlyWrong: true }), 'Ripasso errori', '#/');
-  if ((m = hash.match(/^#\/quiz\/t\/([\w-]+)$/)) && topicById(m[1])) return playQuiz(buildQuiz([m[1]], 10), topicById(m[1]).nome, '#/');
-  if (hash === '#/esame') return renderExamSetup();
-  if (hash === '#/progressi') return renderProgress();
+  if ((m = hash.match(/^studia(?:-(\w+))?$/))) return renderStudy(m[1]);
+  if (hash === 'flashcard') return renderFlashSetup();
+  if (hash === 'quiz') return renderQuizSetup();
+  if (hash === 'quiz-rapido') return playQuiz(buildQuiz(TOPICS.map(t => t.id), 10), 'Quiz rapido', '#home');
+  if (hash === 'quiz-errori') return playQuiz(buildQuiz(TOPICS.map(t => t.id), 20, { onlyWrong: true }), 'Ripasso errori', '#home');
+  if ((m = hash.match(/^quiz-t-([\w-]+)$/)) && topicById(m[1])) return playQuiz(buildQuiz([m[1]], 10), topicById(m[1]).nome, '#home');
+  if (hash === 'esame') return renderExamSetup();
+  if (hash === 'progressi') return renderProgress();
   return renderHome();
 }
 
 function markNav() {
-  const hash = location.hash || '#/';
-  const sec = hash.split('/')[1] || '';
+  const sec = (location.hash.slice(1) || 'home').split('-')[0];
   $$('[data-s]', document).forEach(a => a.classList.toggle('on', a.dataset.s === sec));
 }
 
