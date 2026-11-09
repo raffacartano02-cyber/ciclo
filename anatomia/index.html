@@ -2,37 +2,37 @@
 <html lang="it">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Anatomia</title>
-  <meta name="description" content="Studia anatomia umana per l'esame: flashcard con ripetizione dilazionata, quiz a risposta multipla e simulazioni d'esame.">
-  <meta name="theme-color" content="#b4401c">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icons/icon-192.png">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Anatomia">
-  <link rel="stylesheet" href="css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Anatomia si è spostata</title>
+  <style>
+    :root { --bg: #f6f3ee; --card: #fff; --text: #1f1a17; --muted: #776d64; --accent: #b4401c; color-scheme: light; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #141210; --card: #1e1b18; --text: #efe9e2; --muted: #a59a8f; --accent: #ec7a4f; color-scheme: dark; } }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 16px; box-sizing: border-box; }
+    main { max-width: 420px; background: var(--card); border-radius: 16px; padding: 24px; text-align: center; }
+    h1 { font-size: 1.3rem; margin: 0 0 8px; }
+    p { color: var(--muted); margin: 0 0 18px; }
+    a { display: block; padding: 13px; border-radius: 10px; font-weight: 700; text-decoration: none; margin-top: 10px; }
+    .main { background: var(--accent); color: #fff; }
+    .alt { border: 1px solid var(--muted); color: var(--text); }
+  </style>
 </head>
 <body>
-  <header id="top">
-    <a href="#home" class="brand"><span class="logo" aria-hidden="true">🦴</span>Anatomia</a>
-    <nav class="nav" aria-label="Navigazione principale">
-      <a href="#home" data-s="home">Home</a>
-      <a href="#studia" data-s="studia">Studia</a>
-      <a href="#flashcard" data-s="flashcard">Flashcard</a>
-      <a href="#quiz" data-s="quiz">Quiz</a>
-      <a href="#esame" data-s="esame">Esame</a>
-      <a href="#progressi" data-s="progressi">Progressi</a>
-    </nav>
-  </header>
-  <main id="view"></main>
-  <nav class="tabbar" aria-label="Navigazione">
-    <a href="#home" data-s="home"><span>🏠</span>Home</a>
-    <a href="#studia" data-s="studia"><span>📖</span>Studia</a>
-    <a href="#flashcard" data-s="flashcard"><span>🃏</span>Flashcard</a>
-    <a href="#quiz" data-s="quiz"><span>❓</span>Quiz</a>
-    <a href="#esame" data-s="esame"><span>🎓</span>Esame</a>
-  </nav>
-  <script type="module" src="js/main.js"></script>
+  <main>
+    <h1>Anatomia ha un nuovo indirizzo</h1>
+    <p>L'app di anatomia ora è separata da Ciclo. Aprila dal nuovo link e installala da lì.</p>
+    <a class="main" href="https://raffacartano02-cyber.github.io/anatomia/" target="_blank" rel="noopener">Apri Anatomia</a>
+    <a class="alt" href="../">Torna a Ciclo</a>
+  </main>
+  <script>
+    // Disattiva la vecchia copia offline di Anatomia rimasta sotto l'indirizzo di Ciclo
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => {
+        if (r.scope.endsWith('/anatomia/')) r.unregister();
+      })).catch(() => {});
+    }
+    if (window.caches) caches.keys().then(ks => ks.filter(k => k.startsWith('anatomia-')).forEach(k => caches.delete(k))).catch(() => {});
+  </script>
 </body>
 </html>

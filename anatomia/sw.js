@@ -1,45 +1,13 @@
-const CACHE = 'anatomia-v2';
-const ASSETS = [
-  './',
-  './index.html',
-  './css/style.css',
-  './manifest.webmanifest',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './js/main.js',
-  './js/quiz.js',
-  './js/store.js',
-  './js/topics.js',
-  './js/data/muscoli.js',
-  './js/data/articolazioni.js',
-  './js/data/nervi.js',
-  './js/data/teoria.js'
-];
-
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
-});
-
+// Anatomia si è spostata su https://raffacartano02-cyber.github.io/anatomia/
+// Questo service worker sostituisce quello vecchio: cancella la sua cache e si disattiva,
+// così la vecchia copia offline non resta più dentro l'indirizzo di Ciclo.
+self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k.startsWith('anatomia-') && k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
-});
-
-// Network-first: contenuti aggiornati quando c'è rete, offline usa la cache
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
-  const url = new URL(e.request.url);
-  if (url.origin !== location.origin) return;
-  e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, copy));
-        return res;
-      })
-      .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
-  );
+  e.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(k => k.startsWith('anatomia-')).map(k => caches.delete(k)));
+    await self.registration.unregister();
+    const clients = await self.clients.matchAll({ type: 'window' });
+    clients.forEach(c => c.navigate(c.url));
+  })());
 });
