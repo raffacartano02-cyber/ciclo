@@ -102,6 +102,7 @@ function renderHome() {
       <h1>Studia anatomia,<br>un argomento alla volta.</h1>
       <p class="muted">Flashcard con ripasso intelligente, quiz a risposta multipla e simulazioni d'esame sul programma di anatomia umana.</p>
     </section>
+    ${installBox()}
 
     <section class="stats">
       <div class="stat"><b>${due}</b><span>flashcard da ripassare</span></div>
@@ -584,7 +585,50 @@ function markNav() {
 }
 
 window.addEventListener('hashchange', () => { route(); markNav(); window.scrollTo(0, 0); });
-allQuestions();
-route(); markNav();
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+// ===== Installazione sul telefono =====
+// Android/Chrome offre l'evento beforeinstallprompt; iPhone/iPad richiede
+// "Aggiungi alla schermata Home" da Safari, che la pagina non può avviare da sola.
+let installPrompt = null;
+const isInstalled = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const inFrame = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+function installBox() {
+  if (isInstalled() || inFrame) return '';
+  let body;
+  if (installPrompt) {
+    body = `<p>Installala sul telefono: si apre dall'icona come una normale app e funziona anche senza internet.</p>
+      <button class="btn primary" id="install">Installa l'app</button>`;
+  } else if (isIOS) {
+    body = `<p>Per installarla su iPhone:</p>
+      <ol><li>Apri questa pagina con <b>Safari</b></li>
+      <li>Tocca il tasto <b>Condividi</b> (il quadrato con la freccia verso l'alto)</li>
+      <li>Scorri e tocca <b>Aggiungi alla schermata Home</b>, poi <b>Aggiungi</b></li></ol>`;
+  } else {
+    body = `<p>Per installarla su Android:</p>
+      <ol><li>Apri questa pagina con <b>Chrome</b></li>
+      <li>Tocca il menu <b>⋮</b> in alto a destra</li>
+      <li>Tocca <b>Installa app</b> (o <b>Aggiungi a schermata Home</b>)</li></ol>`;
+  }
+  return `<section class="card install"><b>📲 Installa sul telefono</b>${body}</section>`;
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  installPrompt = e;
+  if ((location.hash.slice(1) || 'home') === 'home') renderHome();
+});
+window.addEventListener('appinstalled', () => { installPrompt = null; notify('App installata: la trovi tra le app del telefono.'); });
+document.addEventListener('click', async e => {
+  if (!e.target.closest('#install') || !installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice.catch(() => {});
+  installPrompt = null;
+  if ((location.hash.slice(1) || 'home') === 'home') renderHome();
+});
+
+allQuestions();
+route(); markNav();

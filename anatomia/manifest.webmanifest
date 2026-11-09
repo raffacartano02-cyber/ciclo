@@ -2,6 +2,7 @@
   "name": "Anatomia — studio e quiz",
   "short_name": "Anatomia",
   "description": "Flashcard, quiz e simulazioni d'esame di anatomia umana.",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -1,4 +1,4 @@
-const CACHE = 'anatomia-v1';
+const CACHE = 'anatomia-v2';
 const ASSETS = [
   './',
   './index.html',
